@@ -3,49 +3,53 @@ import serial
 import itertools
 import statistics
 from collections import deque
+import click
 
-pygame.font.init()
-myfont = pygame.font.SysFont('Arial', 30)
 
-gameDisplay = pygame.display.set_mode((800,600))
-pygame.display.set_caption('PyRower')
-bg = pygame.image.load("images/water.png")
+@click.argument("--test")
+def main(test):
+    pygame.font.init()
+    myfont = pygame.font.SysFont('Arial', 30)
 
-clock = pygame.time.Clock()
-speeds = deque([0,0,0,0], 100)
+    gameDisplay = pygame.display.set_mode((800,600))
+    pygame.display.set_caption('PyRower')
+    bg = pygame.image.load("images/water.png")
 
-crashed = False
-textsurface = None
-speed = 0.
-distance = 0.
+    clock = pygame.time.Clock()
+    speeds = deque([0,0,0,0], 100)
 
-ser = serial.Serial('/dev/cu.usbmodem1421')  # open serial port
-print(ser.name)         # check which port was really used
+    crashed = False
+    textsurface = None
+    speed = 0.
+    distance = 0.
 
-while not crashed:
-    speed += 1
+    ser = serial.Serial('/dev/cu.usbmodem1421')  # open serial port
+    print(ser.name)         # check which port was really used
 
-    gameDisplay.blit(bg, (0, 0))
+    while not crashed:
+        speed += 1
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            crashed = True
+        gameDisplay.blit(bg, (0, 0))
 
-    value = ser.readline().decode('ascii')     # write a string
-    
-    speed, distance = value.split(',')
-    speed = float(speed.strip())
-    distance = float(distance.strip())
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                crashed = True
 
-    speeds.append(speed)
-    speed_av = statistics.mean(list(itertools.islice(speeds, len(speeds)-4, len(speeds))))
+        value = ser.readline().decode('ascii')     # write a string
+        
+        speed, distance = value.split(',')
+        speed = float(speed.strip())
+        distance = float(distance.strip())
 
-    speed_text = myfont.render('Speed : {}'.format(speed_av), False, (0, 0, 0))
-    distance_text = myfont.render('Distance : {}m'.format(distance), False, (0, 0, 0))
+        speeds.append(speed)
+        speed_av = statistics.mean(list(itertools.islice(speeds, len(speeds)-4, len(speeds))))
 
-    gameDisplay.blit(speed_text,(10,10))
-    gameDisplay.blit(distance_text,(10,40))
+        speed_text = myfont.render('Speed : {}'.format(speed_av), False, (0, 0, 0))
+        distance_text = myfont.render('Distance : {}m'.format(distance), False, (0, 0, 0))
 
-    pygame.display.update()
-    clock.tick(10)
-ser.close()             # close port
+        gameDisplay.blit(speed_text,(10,10))
+        gameDisplay.blit(distance_text,(10,40))
+
+        pygame.display.update()
+        clock.tick(10)
+    ser.close()             # close port
